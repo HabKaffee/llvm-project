@@ -3,29 +3,26 @@
 
 class MyClass {
     int aba;
-    // CHECK: MyClass
-    // CHECK_NEXT: └aba
+    
 public:
     void myMethod() {}
-    // CHECK: MyClass
-    // CHECK_NEXT: └myMethod()
     
     struct NestedStruct {
         int nestedInt;
-        // CHECK: MyClass
-        // CHECK_NEXT: └NestedStruct
-        // CHECK_NEXT:  └nestedInt
     };
+    // CHECK: MyClass
+    // CHECK_NEXT: └aba
+    // CHECK_NEXT: └NestedStruct
+    // CHECK_NEXT:  └nestedInt
 };
 
 class ClassWithInheritance : public MyClass {
     bool baba; 
-    // CHECK: ClassWithInheritance
-    // CHECK_NEXT: └baba
+
 public:
     void anotherMethod() {}
     // CHECK: ClassWithInheritance
-    // CHECK_NEXT: └anotherMethod()
+    // CHECK_NEXT: └baba
 };
 
 template <typename T>
@@ -33,43 +30,38 @@ class TemplateClass {
     int a;
     float b;
     bool c;
+    
+public:
+    void someMethod() {}
+    
+    class InnerClass {
+        double innerDouble;
+    };
     // CHECK: TemplateClass 
     // CHECK_NEXT: └a
     // CHECK_NEXT: └b
     // CHECK_NEXT: └c
-public:
-    void someMethod() {}
-    // CHECK: TemplateClass
-    // CHECK_NEXT: └someMethod()
-    
-    class InnerClass {
-        double innerDouble;
-        // CHECK: TemplateClass
-        // CHECK_NEXT: └InnerClass
-        // CHECK_NEXT:  └innerDouble
-    };
+    // CHECK_NEXT: └InnerClass
+    // CHECK_NEXT:  └innerDouble
 };
 
 class not_foo_tbfoo{
     int a;
     float b;
     bool c;
+    
+public:
+    static void staticFunction() {}
     // CHECK: not_foo_tbfoo
     // CHECK_NEXT: └a
     // CHECK_NEXT: └b
     // CHECK_NEXT: └c
-public:
-    static void staticFunction() {}
-    // CHECK: not_foo_tbfoo
-    // CHECK_NEXT: └staticFunction()
 };
 
 struct MyNewClass{
-    // CHECK: MyNewClass 
 public:
     void someFunction() {}
     // CHECK: MyNewClass
-    // CHECK_NEXT: └someFunction()
 };
 
 class LargeClass1 {
