@@ -35,7 +35,7 @@ public:
       : Instance(Instance){};
 
   bool VisitFunctionDecl(FunctionDecl *FD) {
-    if (FD->getName().contains("deprecated")) {
+    if (FD->getName().contains_insensitive("deprecated")) {
       emitWarningMessage(Instance.getDiagnostics(), "Found deprecated function",
                          FD);
     }

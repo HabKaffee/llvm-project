@@ -18,7 +18,7 @@ int deprecatedFunction2(int x, int y) {
   return x + y - y + y;
 }
 
-// CHECK-NOT: warning: Found deprecated function
+// CHECK: warning: Found deprecated function
 int DeprecatedFunction(int x,int y) {
   return x + y - y + y;
 }
