@@ -1,14 +1,14 @@
-// RUN: %clang++ -Xclang -load -Xclang ../../../lab1/Osipenko_Ilya/PrintClassNames.so -Xclang -plugin -Xclang class-names-printer -fsyntax-only ./test.cpp %s 2>81 | FileCheck ./test.cpp
+// RUN: %clang++ -Xclang -load -Xclang ../../../lab1/Osipenko_Ilya/PrintClassNames.so -Xclang -plugin -Xclang class-names-printer -fsyntax-only ./test.cpp %s 2>&1 | FileCheck %s
 
 class MyClass {
 int aba;
 // CHECK: MyClass
-// CHECK_NEXT: └aba
+// CHECK-NEXT: └aba
 };
 class ClassWithInheritance : public MyClass {
 bool baba; 
-// CHECK: ClasswithInheritance
-// CHECK_NEXT: └baba
+// CHECK: ClassWithInheritance
+// CHECK-NEXT: └baba
 };
 
 template <typename T>
@@ -17,9 +17,9 @@ int a;
 float b;
 bool c;
 // CHECK: TemplateClass 
-// CHECK_NEXT: └a
-// CHECK_NEXT: └b
-// CHECK_NEXT: └c
+// CHECK-NEXT: └a
+// CHECK-NEXT: └b
+// CHECK-NEXT: └c
 };
 
 class not_foo_tbfoo{
@@ -27,9 +27,9 @@ int a;
 float b;
 bool c;
 // CHECK: not_foo_tbfoo
-// CHECK_NEXT: └a
-// CHECK_NEXT: └b
-// CHECK_NEXT: └c
+// CHECK-NEXT: └a
+// CHECK-NEXT: └b
+// CHECK-NEXT: └c
 };
 
 struct MyNewClass{
