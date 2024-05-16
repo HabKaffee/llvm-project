@@ -1,5 +1,4 @@
-// RUN: %clang++ -Xclang -load -Xclang ./PrintClassMembers.so -Xclang -plugin -Xclang print-class-fields -fsyntax-only -nostdinc++ -nostdinc ./test.cpp %s 2>81 | FileCheck ./test.cpp
-
+// RUN: %clang++ -Xclang -load -Xclang ../../../lab1/Tolmachev_Maxim/PrintClassMembers.so -Xclang -plugin print-class-fields -fsyntax-only ./test.cpp %s 2>&1 | FileCheck %s
 
 class MyClass {
     int aba;
@@ -9,20 +8,20 @@ public:
     
     struct NestedStruct {
         int nestedInt;
+        
     };
     // CHECK: MyClass
-    // CHECK_NEXT: └aba
-    // CHECK_NEXT: └NestedStruct
-    // CHECK_NEXT:  └nestedInt
+    // CHECK-NEXT: └aba
+    // CHECK-NEXT: └NestedStruct
+    // CHECK-NEXT: └nestedInt
 };
 
 class ClassWithInheritance : public MyClass {
     bool baba; 
-
 public:
     void anotherMethod() {}
     // CHECK: ClassWithInheritance
-    // CHECK_NEXT: └baba
+    // CHECK-NEXT: └baba
 };
 
 template <typename T>
@@ -36,13 +35,15 @@ public:
     
     class InnerClass {
         double innerDouble;
+        
     };
     // CHECK: TemplateClass 
-    // CHECK_NEXT: └a
-    // CHECK_NEXT: └b
-    // CHECK_NEXT: └c
-    // CHECK_NEXT: └InnerClass
-    // CHECK_NEXT:  └innerDouble
+    // CHECK-NEXT: └a
+    // CHECK-NEXT: └b
+    // CHECK-NEXT: └c
+    // CHECK: TemplateClass
+    // CHECK-NEXT: └InnerClass
+    // CHECK-NEXT: └innerDouble
 };
 
 class not_foo_tbfoo{
@@ -53,15 +54,16 @@ class not_foo_tbfoo{
 public:
     static void staticFunction() {}
     // CHECK: not_foo_tbfoo
-    // CHECK_NEXT: └a
-    // CHECK_NEXT: └b
-    // CHECK_NEXT: └c
+    // CHECK-NEXT: └a
+    // CHECK-NEXT: └b
+    // CHECK-NEXT: └c
 };
 
 struct MyNewClass{
+    
 public:
     void someFunction() {}
-    // CHECK: MyNewClass
+    // CHECK: MyNewClass 
 };
 
 class LargeClass1 {
@@ -74,14 +76,14 @@ class LargeClass1 {
     unsigned int ui;
     unsigned long long ull;
     // CHECK: LargeClass1
-    // CHECK_NEXT: └x
-    // CHECK_NEXT: └y
-    // CHECK_NEXT: └z
-    // CHECK_NEXT: └ch
-    // CHECK_NEXT: └ll
-    // CHECK_NEXT: └sh
-    // CHECK_NEXT: └ui
-    // CHECK_NEXT: └ull
+    // CHECK-NEXT: └x
+    // CHECK-NEXT: └y
+    // CHECK-NEXT: └z
+    // CHECK-NEXT: └ch
+    // CHECK-NEXT: └ll
+    // CHECK-NEXT: └sh
+    // CHECK-NEXT: └ui
+    // CHECK-NEXT: └ull
 };
 
 class LargeClass2 {
@@ -94,14 +96,14 @@ class LargeClass2 {
     unsigned int g[70];
     unsigned long long h[80];
     // CHECK: LargeClass2
-    // CHECK_NEXT: └a
-    // CHECK_NEXT: └b
-    // CHECK_NEXT: └c
-    // CHECK_NEXT: └d
-    // CHECK_NEXT: └e
-    // CHECK_NEXT: └f
-    // CHECK_NEXT: └g
-    // CHECK_NEXT: └h
+    // CHECK-NEXT: └a
+    // CHECK-NEXT: └b
+    // CHECK-NEXT: └c
+    // CHECK-NEXT: └d
+    // CHECK-NEXT: └e
+    // CHECK-NEXT: └f
+    // CHECK-NEXT: └g
+    // CHECK-NEXT: └h
 };
 
 class LargeClass3 {
@@ -114,13 +116,12 @@ class LargeClass3 {
     unsigned int g[700];
     unsigned long long h[800];
     // CHECK: LargeClass3
-    // CHECK_NEXT: └a
-    // CHECK_NEXT: └b
-    // CHECK_NEXT: └c
-    // CHECK_NEXT: └d
-    // CHECK_NEXT: └e
-    // CHECK_NEXT: └f
-    // CHECK_NEXT: └g
-    // CHECK_NEXT: └h
+    // CHECK-NEXT: └a
+    // CHECK-NEXT: └b
+    // CHECK-NEXT: └c
+    // CHECK-NEXT: └d
+    // CHECK-NEXT: └e
+    // CHECK-NEXT: └f
+    // CHECK-NEXT: └g
+    // CHECK-NEXT: └h
 };
-
