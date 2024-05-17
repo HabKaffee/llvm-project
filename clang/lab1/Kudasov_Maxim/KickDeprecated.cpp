@@ -72,6 +72,7 @@ public:
   }
 };
 
-static FrontendPluginRegistry::Add<WarnDeprecatedFunctionAction>
-    X("warn-deprecated-func",
-      "Add warning when sees funtion with 'deprecated' in name");
+static FrontendPluginRegistry::Add<KickDeprecatedWarn>
+    X("kick-deprecated-with-warn",
+      "Pop up warning when clang detects function containing \'deprecated\' in name"
+    );

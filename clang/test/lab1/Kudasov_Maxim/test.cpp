@@ -1,4 +1,4 @@
-// RUN: %clang++ -cc1 -load %S/../../../lab1/Kudasov_Maxim/WarnDeprecated.so -plugin warn-deprecated-func %s 2>&1 | FileCheck %s
+// RUN: %clang++ -cc1 -load %S/../../../lab1/Kudasov_Maxim/KickDeprecated.so -plugin kick-deprecated-with-warn %s 2>&1 | FileCheck %s
 
 // CHECK: warning: Found deprecated function
 void deprecatedFoo() { return; }
