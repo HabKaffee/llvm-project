@@ -1,32 +1,35 @@
 // RUN: %clang++ -cc1 -load %S/../../../lab1/Kudasov_Maxim/WarnDeprecated.so -plugin warn-deprecated-func %s 2>&1 | FileCheck %s
 
+// CHECK: warning: Found deprecated function
+void deprecatedFoo() { return; }
+
 // CHECK-NOT: warning: Found deprecated function
-int add(int a, int b) { return a + b; } 
+float fooBar() { return 42.0; }
 
 // CHECK: warning: Found deprecated function
-int deprecated_add(int x, int y) {
-  return x + y - y + y;
+float deprecatedDeprecated_deprecated() { return 1488.0; }
+
+// CHECK-NOT: warning: Found deprecated function
+int* derprecated_createArray() {
+    int* newArray = new int[5];
+    return newArray;
 }
+
+// CHECK-NOT: warning: Found deprecated function
+void myDeprecatedFunc() { return; }
 
 // CHECK: warning: Found deprecated function
-int another_deprecated_function(int x, int y) {
-  return x + y - y + y;
-}
-
-// CHECK: warning: Found deprecated function
-int deprecatedFunction2(int x, int y) {
-  return x + y - y + y;
-}
+void myDeprecatedFunc_deprecated() { return; }
 
 // CHECK-NOT: warning: Found deprecated function
-int DeprecatedFunction(int x,int y) {
-  return x + y - y + y;
-}
+float myDeprecatedVariable = 148.8;
 
 // CHECK-NOT: warning: Found deprecated function
-int deprecatedVariable = 0; 
-
+float deprecatedVariable = 11.9;
 
 // CHECK-NOT: warning: Found deprecated function
-class deprecated{};
+float variable_deprecated = 148.8;
+
+// CHECK-NOT: warning: Found deprecated function
+class class_deprecated{};
 
