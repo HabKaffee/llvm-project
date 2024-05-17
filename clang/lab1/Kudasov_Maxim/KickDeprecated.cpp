@@ -1,78 +1,71 @@
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/Decl.h"
-#include "clang/AST/DeclCXX.h"
 #include "clang/AST/RecursiveASTVisitor.h"
-#include "clang/Basic/Diagnostic.h"
-#include "clang/Basic/DiagnosticIDs.h"
-#include "clang/Basic/DiagnosticOptions.h"
-#include "clang/Basic/SourceLocation.h"
-#include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/CompilerInstance.h"
-#include "clang/Frontend/FrontendAction.h"
 #include "clang/Frontend/FrontendPluginRegistry.h"
-#include "clang/Lex/Pragma.h"
-#include "clang/Lex/Preprocessor.h"
-#include "clang/Tooling/Tooling.h"
-#include "llvm/ADT/StringRef.h"
-#include "llvm/Support/raw_ostream.h"
-#include <memory>
+#include "clang/Basic/Diagnostic.h"
+#include <iostream>
 
-using namespace clang;
-
-template <unsigned N>
-void emitWarningMessage(DiagnosticsEngine &DE, char const (&Message)[N],
-                        FunctionDecl *FD) {
-  unsigned const Id = DE.getCustomDiagID(DiagnosticsEngine::Warning, Message);
-  DiagnosticBuilder const DB = DE.Report(FD->getLocation(), Id);
-}
-
-class WarnDeprecatedFunctionVisitor
-    : public RecursiveASTVisitor<WarnDeprecatedFunctionVisitor> {
+class FindDeprecatedFuncDeclVisitor
+  : public clang::RecursiveASTVisitor<FindDeprecatedFuncDeclVisitor> {
+private:
+    clang::ASTContext& context;
+    clang::CompilerInstance& compiler;
+    clang::DiagnosticsEngine& engine;
 public:
-  WarnDeprecatedFunctionVisitor(CompilerInstance &Instance)
-      : Instance(Instance){};
+    explicit FindDeprecatedFuncDeclVisitor(
+        clang::ASTContext& Context,
+        clang::CompilerInstance& Compiler
+        ) : context(Context),
+            compiler(Compiler),
+            engine(Compiler.getDiagnostics()) {}
 
-  bool VisitFunctionDecl(FunctionDecl *FD) {
-    if (FD->getName().contains("deprecated")) {
-      emitWarningMessage(Instance.getDiagnostics(), "Found deprecated function",
-                         FD);
+    bool VisitFunctionDecl(clang::FunctionDecl *Declaration) {
+        if (Declaration->getName().contains("deprecated")) {
+            clang::FullSourceLoc loc = context.getFullLoc(Declaration->getLocation());
+            unsigned int warningId = engine.getCustomDiagID(
+                clang::DiagnosticsEngine::Warning,
+                "This function-imposter contains \'deprecated\': \'%0\'"
+            );
+            engine.Report(loc, warningId) << Declaration->getNameAsString();
+            std::cout << Declaration->getNameAsString() << std::endl;
+        }
+        return true;
     }
-    return true;
-  }
+};
 
+class KickDeprecatedWarnConsumer : public clang::ASTConsumer {
 private:
-  CompilerInstance &Instance;
-};
-
-class WarnDeprecatedFunctionConsumer : public ASTConsumer {
+    clang::CompilerInstance& compiler;
+    FindDeprecatedFuncDeclVisitor visitor;
 public:
-  explicit WarnDeprecatedFunctionConsumer(CompilerInstance &Instance)
-      : Visitor(Instance){};
+    KickDeprecatedWarnConsumer(clang::CompilerInstance& Compiler)
+        : compiler(Compiler), visitor(Compiler.getASTContext(), Compiler) {}
 
-  virtual void HandleTranslationUnit(ASTContext &Context) override {
-    Visitor.TraverseDecl(Context.getTranslationUnitDecl());
-  }
-
-private:
-  WarnDeprecatedFunctionVisitor Visitor;
+    virtual void HandleTranslationUnit(clang::ASTContext& Context) override {
+        visitor.TraverseDecl(Context.getTranslationUnitDecl());
+    }
 };
 
-class WarnDeprecatedFunctionAction : public PluginASTAction {
-public:
-  virtual std::unique_ptr<ASTConsumer>
-  CreateASTConsumer(CompilerInstance &CI, llvm::StringRef) override {
-    return std::make_unique<WarnDeprecatedFunctionConsumer>(CI);
-  }
+class KickDeprecatedWarnAction : public clang::PluginASTAction {
+protected:
+    virtual std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(
+        clang::CompilerInstance &Compiler,
+        llvm::StringRef InFile
+    ) override {
+        return std::make_unique<KickDeprecatedWarnConsumer>(Compiler);
+    }
 
-  bool ParseArgs(const CompilerInstance &CI,
-                 const std::vector<std::string> &args) override {
-    return true;
-  }
+    bool ParseArgs(
+        const clang::CompilerInstance &Compiler,
+        const std::vector<std::string>& args
+    ) override {
+        return true;
+    }
 };
 
-static FrontendPluginRegistry::Add<KickDeprecatedWarn>
-    X("kick-deprecated-with-warn",
-      "Pop up warning when clang detects function containing \'deprecated\' in name"
-    );
+static clang::FrontendPluginRegistry::Add<KickDeprecatedWarnAction>
+X("kick_deprecated_with_warn",
+    "Pop up warning when clang detects function containing \'deprecated\' in name"
+);
