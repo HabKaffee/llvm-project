@@ -1,12 +1,15 @@
 add_llvm_library(KickDeprecated MODULE KickDeprecated.cpp
                  PLUGIN_TOOL clang)
 
-set(LLVM_LINK_COMPONENTS Support)
-clang_target_link_libraries(KickDeprecated PRIVATE
-    clangAST
-    clangBasic
-    clangFrontend
-)
+if(WIN32 OR CYGWIN)
+    set(LLVM_LINK_COMPONENTS Support)
+    clang_target_link_libraries(KickDeprecated PRIVATE
+        clangAST
+        clangBasic
+        clangFrontend
+        llvmSupport
+    )
+endif()
 
 set_target_properties(KickDeprecated
     PROPERTIES
