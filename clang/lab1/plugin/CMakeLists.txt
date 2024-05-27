@@ -22,6 +22,3 @@ add_llvm_library(AlwaysInlineNoConditionPass MODULE
         PLUGIN_TOOL
         opt
 )
-
-# /usr/bin/clang++ -O1 -S -emit-llvm -o test.ll test.cpp
-# /usr/bin/opt -load-pass-plugin ../build/AlwaysInlineNoConditionPass.so -passes=always-inline-no-condition -debug-pass-manager -S test.ll -o testOpt.ll
