@@ -24,7 +24,7 @@ public:
 
 private:
     void handleVarDecl(VarDecl* vd) {
-        if(vd && !vd->hasAttr<UnusedAttr>()) {
+        if(vd && !vd->hasAttr<UnusedAttr>() && !vd->isUsed(false)) {
             vd->addAttr(UnusedAttr::CreateImplicit(
                 vd->getASTContext(),
                 vd->getBeginLoc()
@@ -40,6 +40,7 @@ public:
 
     void HandleTranslationUnit(ASTContext& ctx) override {
         myVisitor.TraverseDecl(ctx.getTranslationUnitDecl());
+        ctx.getTranslationUnitDecl()->dump();
     }
 
 private:
