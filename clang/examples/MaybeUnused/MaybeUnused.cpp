@@ -17,14 +17,13 @@ public:
             return true;
         }
 
-        bool VisitParmVarDecl(ParmVarDecl* pvd) {
-            handleVarDecl((VarDecl*)pvd);
-            return true;
-        }
-
 private:
     void handleVarDecl(VarDecl* vd) {
-        if(vd && !vd->hasAttr<UnusedAttr>() && !vd->isUsed(false)) {
+        auto toMarkUnused = [] (VarDecl* vd) -> bool {
+            return vd && !vd->hasAttr<UnusedAttr>() && !vd->isUsed(false);
+        };
+
+        if(toMarkUnused(vd)) {
             vd->addAttr(UnusedAttr::CreateImplicit(
                 vd->getASTContext(),
                 vd->getBeginLoc()
