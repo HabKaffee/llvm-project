@@ -40,7 +40,9 @@ public:
 
     void HandleTranslationUnit(ASTContext& ctx) override {
         myVisitor.TraverseDecl(ctx.getTranslationUnitDecl());
-        ctx.getTranslationUnitDecl()->dump();
+
+        // for debugging
+        // ctx.getTranslationUnitDecl()->dump();
     }
 
 private:
