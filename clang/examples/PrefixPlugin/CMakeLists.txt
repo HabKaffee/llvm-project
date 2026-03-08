@@ -1,24 +1,15 @@
-cmake_minimum_required(VERSION 3.13)
-project(PrefixPlugin)
+set(LLVM_EXPORTED_SYMBOL_FILE ${CMAKE_CURRENT_SOURCE_DIR}/PrefixPlugin.exports)
 
-find_package(LLVM REQUIRED CONFIG)
-find_package(Clang REQUIRED CONFIG)
+add_llvm_library(PrefixPlugin MODULE PrefixPlugin.cpp PLUGIN_TOOL clang)
 
-message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
-message(STATUS "Using ClangConfig.cmake in: ${Clang_DIR}")
-
-include_directories(${LLVM_INCLUDE_DIRS})
-include_directories(${CLANG_INCLUDE_DIRS})
-add_definitions(${LLVM_DEFINITIONS})
-
-add_library(PrefixPlugin SHARED PrefixPlugin.cpp)
-
-target_link_libraries(PrefixPlugin
-  PRIVATE
-  clangAST
-  clangBasic
-  clangFrontend
-  clangRewrite
-  clangLex
-)
+if(WIN32 OR CYGWIN)
+  set(LLVM_LINK_COMPONENTS
+    Support
+  )
+  clang_target_link_libraries(PrefixPlugin PRIVATE
+    clangAST
+    clangBasic
+    clangFrontend
+    clangRewrite
+  )
+endif()
