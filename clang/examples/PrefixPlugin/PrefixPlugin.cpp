@@ -7,109 +7,109 @@
 
 #include <memory>
 #include <string>
-#include <unordered_map>
 
 using namespace clang;
 
 namespace {
 
-class CollectorVisitor : public RecursiveASTVisitor<CollectorVisitor> {
-public:
-    explicit CollectorVisitor(ASTContext &Context)
-        : Context(Context) {}
-
-    std::unordered_map<const NamedDecl*, std::string> RenameMap;
-
-    bool VisitParmVarDecl(ParmVarDecl *P) {
-        if (!isFromMainFile(P)) return true;
-        if (P->getName().empty()) return true;
-
-        RenameMap[P] = "param_" + P->getNameAsString();
-        return true;
-    }
-
-    bool VisitVarDecl(VarDecl *V) {
-        if (!isFromMainFile(V)) return true;
-        if (V->getName().empty()) return true;
-
-        if (isa<ParmVarDecl>(V)) return true;
-
-        std::string oldName = V->getNameAsString();
-
-        if (V->isLocalVarDecl()) {
-            if (V->isStaticLocal())
-                RenameMap[V] = "static_" + oldName;
-            else
-                RenameMap[V] = "local_" + oldName;
-        } else if (V->hasGlobalStorage() && V->isFileVarDecl()) {
-            RenameMap[V] = "global_" + oldName;
-        }
-
-        return true;
-    }
-
-private:
-    ASTContext &Context;
-
-    bool isFromMainFile(const Decl *D) const {
-        return Context.getSourceManager().isWrittenInMainFile(
-            Context.getSourceManager().getSpellingLoc(D->getLocation()));
-    }
-};
-
 class RewriteVisitor : public RecursiveASTVisitor<RewriteVisitor> {
 public:
-    RewriteVisitor(ASTContext &Context,
-                   Rewriter &R,
-                   const std::unordered_map<const NamedDecl*, std::string> &Map)
-        : Context(Context), R(R), RenameMap(Map) {}
+    RewriteVisitor(ASTContext &Context, Rewriter &R)
+        : Context(Context), R(R) {}
 
     bool VisitParmVarDecl(ParmVarDecl *P) {
+        // Обрабатываем объявление параметра функции.
         rewriteDeclName(P);
         return true;
     }
 
     bool VisitVarDecl(VarDecl *V) {
-        if (!isa<ParmVarDecl>(V))
-            rewriteDeclName(V);
+        // Параметры приходят сюда как VarDecl, но они уже обработаны выше.
+        if (isa<ParmVarDecl>(V))
+            return true;
+
+        // Обрабатываем обычные локальные/глобальные/static переменные.
+        rewriteDeclName(V);
         return true;
     }
 
     bool VisitDeclRefExpr(DeclRefExpr *DRE) {
-        const ValueDecl *VD = DRE->getDecl();
-        auto it = RenameMap.find(VD);
-        if (it == RenameMap.end()) return true;
+        // Переписываем использования идентификаторов.
+        if (!isFromMainFile(DRE->getLocation()))
+            return true;
 
-        if (!isFromMainFile(DRE->getLocation())) return true;
+        // Для использования переменной вычисляем целевое имя с префиксом.
+        const ValueDecl *VD = DRE->getDecl();
+        std::string newName = getPrefixedName(VD);
+        if (newName.empty())
+            return true;
 
         std::string oldName = VD->getNameAsString();
-        if (oldName.empty()) return true;
+        if (oldName.empty())
+            return true;
 
-        R.ReplaceText(DRE->getLocation(), oldName.size(), it->second);
+        R.ReplaceText(DRE->getLocation(), oldName.size(), newName);
         return true;
     }
 
 private:
     ASTContext &Context;
     Rewriter &R;
-    const std::unordered_map<const NamedDecl*, std::string> &RenameMap;
 
     void rewriteDeclName(NamedDecl *D) {
-        auto it = RenameMap.find(D);
-        if (it == RenameMap.end()) return;
-
-        SourceLocation Loc = D->getLocation();
-        if (!isFromMainFile(Loc)) return;
+        // Не трогаем объявления не из основного файла.
+        if (!isFromMainFile(D))
+            return;
 
         std::string oldName = D->getNameAsString();
-        if (oldName.empty()) return;
+        if (oldName.empty())
+            return;
 
-        R.ReplaceText(Loc, oldName.size(), it->second);
+        // Работаем только с сущностями, которые являются ValueDecl.
+        const auto *VD = dyn_cast<ValueDecl>(D);
+        if (!VD)
+            return;
+
+        // Вычисляем новое имя по типу объявления.
+        std::string newName = getPrefixedName(VD);
+        if (newName.empty())
+            return;
+
+        // Переписываем идентификатор в месте объявления.
+        R.ReplaceText(D->getLocation(), oldName.size(), newName);
+    }
+
+    bool isFromMainFile(const Decl *D) const {
+        // Вариант для Decl: берем location и делегируем в перегрузку ниже.
+        return isFromMainFile(D->getLocation());
     }
 
     bool isFromMainFile(SourceLocation Loc) const {
+        // Проверяем, что location принадлежит именно главному .cpp-файлу.
         return Context.getSourceManager().isWrittenInMainFile(
             Context.getSourceManager().getSpellingLoc(Loc));
+    }
+
+    static std::string getPrefixedName(const ValueDecl *D) {
+        // Возвращаем итоговое имя с нужным префиксом:
+        // param_ / local_ / static_ / global_.
+        if (!D || D->getName().empty())
+            return "";
+
+        if (const auto *P = dyn_cast<ParmVarDecl>(D))
+            return "param_" + P->getNameAsString();
+
+        const auto *V = dyn_cast<VarDecl>(D);
+        if (!V)
+            return "";
+
+        const std::string oldName = V->getNameAsString();
+        if (V->isLocalVarDecl())
+            return (V->isStaticLocal() ? "static_" : "local_") + oldName;
+        if (V->hasGlobalStorage() && V->isFileVarDecl())
+            return "global_" + oldName;
+
+        return "";
     }
 };
 
@@ -121,12 +121,10 @@ public:
     }
 
     void HandleTranslationUnit(ASTContext &Context) override {
-        CollectorVisitor collector(Context);
-        collector.TraverseDecl(Context.getTranslationUnitDecl());
-
-        RewriteVisitor rewriter(Context, R, collector.RenameMap);
+        RewriteVisitor rewriter(Context, R);
         rewriter.TraverseDecl(Context.getTranslationUnitDecl());
 
+        // Выводим переписанный основной файл в stdout.
         R.getEditBuffer(Context.getSourceManager().getMainFileID()).write(llvm::outs());
     }
 
@@ -150,5 +148,6 @@ protected:
 
 } // namespace
 
+// инициализация плагина
 static FrontendPluginRegistry::Add<PrefixPluginAction>
 X("prefix-plugin", "add prefixes to globals, locals, statics and params");

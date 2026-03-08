@@ -11,7 +11,7 @@ int foo(int a, int b) {
     return a + b + var1 + var2 + var3;
 }
 
-/*
+/* Правильный вариант
 int global_var1 = 0;
 
 int foo(int param_a, int param_b) {
@@ -39,7 +39,7 @@ int multiply(int x, int y) {
     return result + calls;
 }
 
-/*
+/* Правильный вариант
 int global_counter = 10;
 
 int add(int param_x, int param_y) {
@@ -71,7 +71,7 @@ int compute(int p, int q) {
     return finalResult;
 }
 
-/*
+/* Правильный вариант
 int global_globalValue = 5;
 
 int compute(int param_p, int param_q) {

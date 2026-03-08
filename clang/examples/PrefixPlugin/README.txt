@@ -29,7 +29,7 @@
   build/bin/clang -fsyntax-only \
     -Xclang -load -Xclang build/lib/PrefixPlugin.so \
     -Xclang -plugin -Xclang prefix-plugin \
-    clang/examples/test.cpp
+    clang/examples/PrefixPlugin/test.cpp
 ```
 
 3. Запуск с одновременным сохранением результата в файл:
@@ -38,5 +38,5 @@
   build/bin/clang -fsyntax-only \
     -Xclang -load -Xclang build/lib/PrefixPlugin.so \
     -Xclang -plugin -Xclang prefix-plugin \
-    clang/examples/test.cpp | tee /tmp/prefix_out.cpp
+    clang/examples/PrefixPlugin/test.cpp | tee /tmp/prefix_out.cpp
 ```
