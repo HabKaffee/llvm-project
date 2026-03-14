@@ -88,7 +88,7 @@ protected:
   }
 
   ActionType getActionType() override {
-    return AddAfterMainAction;
+    return AddBeforeMainAction;
   }
 };
 
