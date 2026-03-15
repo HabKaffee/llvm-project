@@ -1,0 +1,1 @@
+add_llvm_library(FindUnusedVars MODULE FindUnusedVars.cpp PLUGIN_TOOL clang)
