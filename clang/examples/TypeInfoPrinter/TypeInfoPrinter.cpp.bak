@@ -1,0 +1,119 @@
+#include "clang/AST/AST.h"
+#include "clang/AST/ASTConsumer.h"
+#include "clang/AST/Decl.h"
+#include "clang/AST/DeclCXX.h"
+#include "clang/AST/Type.h"
+#include "clang/Frontend/FrontendPluginRegistry.h"
+#include "clang/Frontend/CompilerInstance.h"
+#include "clang/Frontend/FrontendActions.h"
+#include "llvm/Support/raw_ostream.h"
+#include <memory>
+
+using namespace clang;
+
+class TypeInfoPrinter : public ASTConsumer {
+public:
+  void HandleTranslationUnit(ASTContext &Context) override {
+    TranslationUnitDecl *TUDecl = Context.getTranslationUnitDecl();
+    
+    for (const auto *Decl : TUDecl->decls()) {
+      if (const auto *Record = dyn_cast<RecordDecl>(Decl)) {
+        if (Record->isStruct() || Record->isClass()) {
+          printTypeInfo(Record);
+        }
+      }
+    }
+  }
+
+private:
+  void printTypeInfo(const RecordDecl *RD) {
+    llvm::outs() << "========================================\n";
+    llvm::outs() << "Тип: " << RD->getName() << "\n";
+    
+    if (auto *CXXRD = dyn_cast<CXXRecordDecl>(RD)) {
+      if (CXXRD->getNumBases() > 0) {
+        llvm::outs() << "|_Базовые классы\n";
+        for (const auto &Base : CXXRD->bases()) {
+          llvm::outs() << "  |_ " << Base.getType().getAsString() 
+                      << " (доступ: " << getAccessStr(Base.getAccessSpecifier()) << ")\n";
+        }
+      }
+    }
+    
+    llvm::outs() << "|_Поля\n";
+    if (RD->field_empty()) {
+      llvm::outs() << "  |_ (нет полей)\n";
+    } else {
+      for (const auto *Field : RD->fields()) {
+        llvm::outs() << "  |_ " << Field->getName() << " ("
+                    << Field->getType().getAsString() << " | доступ: "
+                    << getAccessStr(Field->getAccess()) << ")\n";
+      }
+    }
+    
+    llvm::outs() << "|\n|_Методы\n";
+    if (auto *CXXRD = dyn_cast<CXXRecordDecl>(RD)) {
+      if (CXXRD->method_begin() == CXXRD->method_end()) {
+        llvm::outs() << "  |_ (нет методов)\n";
+      } else {
+        for (const auto *Method : CXXRD->methods()) {
+          printMethodInfo(Method);
+        }
+      }
+    }
+    
+    llvm::outs() << "========================================\n\n";
+  }
+  
+  void printMethodInfo(const CXXMethodDecl *Method) {
+    llvm::outs() << "  |_ " << Method->getNameAsString() << " (";
+    
+    if (auto *FD = dyn_cast<FunctionDecl>(Method)) {
+      llvm::outs() << FD->getReturnType().getAsString();
+    }
+    
+    llvm::outs() << "() | доступ: " << getAccessStr(Method->getAccess());
+    
+    if (Method->isVirtual()) {
+      llvm::outs() << " | virtual";
+      if (Method->isPureVirtual()) {
+        llvm::outs() << " | pure";
+      }
+    }
+    
+    if (Method->size_overridden_methods() > 0) {
+      llvm::outs() << " | override";
+    }
+      
+    llvm::outs() << ")\n";
+  }
+  
+  const char* getAccessStr(AccessSpecifier AS) {
+    switch(AS) {
+      case AS_public: return "public";
+      case AS_protected: return "protected";
+      case AS_private: return "private";
+      default: return "unknown";
+    }
+  }
+};
+
+class TypeInfoAction : public PluginASTAction {
+public:
+  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
+                                                 StringRef InFile) override {
+    return std::make_unique<TypeInfoPrinter>();
+  }
+
+  bool ParseArgs(const CompilerInstance &CI,
+                 const std::vector<std::string>& args) override {
+    return true;
+  }
+
+  ActionType getActionType() override {
+    return AddBeforeMainAction; 
+  }
+};
+
+static FrontendPluginRegistry::Add<TypeInfoAction> 
+X("type-info-printer", "Печатает информацию о пользовательских типах данных (поля, методы, базовые классы)");
