@@ -41,9 +41,6 @@ PreservedAnalyses MyInlinePass::run(Function& F, FunctionAnalysisManager& FM) {
 
         // Разделяем текущий блок на две части (до вызова функций включительно и после)
         Instruction* Next = Call->getNextNode();
-        if (!Next) {
-            continue;
-        }
         BasicBlock* AfterBB = CallBB->splitBasicBlock(Next, "post.call");
 
         // Убираем автоматически созданный после разделения переход br
@@ -54,9 +51,9 @@ PreservedAnalyses MyInlinePass::run(Function& F, FunctionAnalysisManager& FM) {
         SmallVector<BasicBlock*, 8> ClonedBlocks;
         // Перебираем все базовые блоки вызываемой функций с целью их клонирования
         for (BasicBlock& BB : *CalledFunc) {
-            BasicBlock* NewBB = CloneBasicBlock(&BB, VMap, "cloned", &F);
-            VMap[&BB] = NewBB;
-            ClonedBlocks.push_back(NewBB);
+            BasicBlock* ClonedBB = CloneBasicBlock(&BB, VMap, "cloned", &F);
+            VMap[&BB] = ClonedBB;
+            ClonedBlocks.push_back(ClonedBB);
         }
 
         // Ремапим инструкции (обновляем их связи, используя VMap) и заменяем return на переход
