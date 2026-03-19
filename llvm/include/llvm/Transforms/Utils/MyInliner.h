@@ -7,7 +7,7 @@ namespace llvm {
 
     class MyInlinePass : public PassInfoMixin<MyInlinePass> {
     public:
-        PreservedAnalyses run(Function& M, FunctionAnalysisManager& FM);
+        PreservedAnalyses run(Function& F, FunctionAnalysisManager& FM);
     };
 
 } // namespace llvm
