@@ -1,5 +1,6 @@
 set(LLVM_OPTIONAL_SOURCES
   SampleInput.cpp
+  SampleInput2.cpp
 )
 
 add_llvm_library(ImplicitConversionsCounter MODULE ImplicitConversionsCounter.cpp PLUGIN_TOOL clang)
