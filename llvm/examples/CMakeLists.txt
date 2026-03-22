@@ -17,3 +17,5 @@ endif()
 if( HAVE_PTHREAD_H )
   add_subdirectory(ParallelJIT)
 endif( HAVE_PTHREAD_H )
+
+add_subdirectory(Lab2Pass)
