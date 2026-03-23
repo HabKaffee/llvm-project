@@ -38,6 +38,7 @@ add_llvm_component_library(LLVMTransformUtils
   InjectTLIMappings.cpp
   InstructionNamer.cpp
   Instrumentation.cpp
+  InstrumentStartEnd.cpp
   IntegerDivision.cpp
   IRNormalizer.cpp
   LCSSA.cpp
